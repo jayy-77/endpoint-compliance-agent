@@ -4,9 +4,12 @@ import (
     "encoding/json"
     "fmt"
     "log"
+    "os"
+    "time"
 
     "compliance-agent/analyzer"
     "compliance-agent/collector"
+    "compliance-agent/report"
 )
 
 func main() {
@@ -31,19 +34,45 @@ func main() {
 	fmt.Println("Processes:")
 	dumpJSON(procs)
 
-    // Phase 3: simple compliance policies
-    policies := analyzer.Policies{
-        AllowedUsers: []string{"root", "jaykumar"},
-        AllowedPorts: []int{22, 80, 443},
+	// Phase 3: simple compliance policies
+	policies := analyzer.Policies{
+		AllowedUsers: []string{"root", "jaykumar"},
+		AllowedPorts: []int{22, 80, 443},
+	}
+	// Placeholder: open ports collection will be added later; use an empty slice for now
+	var openPorts []int
+	userViolations := analyzer.AnalyzeUsers(users, policies)
+	portViolations := analyzer.AnalyzePorts(openPorts, policies)
+	fmt.Println("Compliance Violations (users):")
+	dumpJSON(userViolations)
+	fmt.Println("Compliance Violations (ports):")
+	dumpJSON(portViolations)
+
+    // Phase 4: build and save JSON report
+    hostname, _ := os.Hostname()
+    var violations []map[string]string
+    for _, v := range userViolations {
+        violations = append(violations, map[string]string{"category": v.Category, "message": v.Message})
     }
-    // Placeholder: open ports collection will be added later; use an empty slice for now
-    var openPorts []int
-    userViolations := analyzer.AnalyzeUsers(users, policies)
-    portViolations := analyzer.AnalyzePorts(openPorts, policies)
-    fmt.Println("Compliance Violations (users):")
-    dumpJSON(userViolations)
-    fmt.Println("Compliance Violations (ports):")
-    dumpJSON(portViolations)
+    for _, v := range portViolations {
+        violations = append(violations, map[string]string{"category": v.Category, "message": v.Message})
+    }
+    rep := report.ComplianceReport{
+        GeneratedAt: time.Now().UTC(),
+        Hostname:    hostname,
+        Users:       users,
+        Processes:   procs,
+        OpenPorts:   openPorts,
+        Violations:  violations,
+    }
+    b, _ := rep.ToJSON()
+    fmt.Println("Compliance Report JSON:")
+    fmt.Println(string(b))
+    if err := rep.SaveToFile("compliance_report.json"); err != nil {
+        log.Printf("failed to save report: %v", err)
+    } else {
+        fmt.Println("Saved report to compliance_report.json")
+    }
 }
 
 func dumpJSON(v any) {
