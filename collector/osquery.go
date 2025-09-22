@@ -16,10 +16,10 @@ type OSQueryCollector struct {
 
 // Collector is an interface for system data collection, enabling future extensions.
 type Collector interface {
-    CollectUsers() ([]map[string]string, error)
-    CollectProcesses(limit int) ([]map[string]string, error)
-    CollectOpenPorts() ([]int, error)
-    CollectPackages(limit int) ([]map[string]string, error)
+	CollectUsers() ([]map[string]string, error)
+	CollectProcesses(limit int) ([]map[string]string, error)
+	CollectOpenPorts() ([]int, error)
+	CollectPackages(limit int) ([]map[string]string, error)
 }
 
 func NewOSQueryCollector() *OSQueryCollector {
