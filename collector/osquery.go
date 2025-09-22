@@ -14,6 +14,14 @@ type OSQueryCollector struct {
 	Timeout    time.Duration
 }
 
+// Collector is an interface for system data collection, enabling future extensions.
+type Collector interface {
+    CollectUsers() ([]map[string]string, error)
+    CollectProcesses(limit int) ([]map[string]string, error)
+    CollectOpenPorts() ([]int, error)
+    CollectPackages(limit int) ([]map[string]string, error)
+}
+
 func NewOSQueryCollector() *OSQueryCollector {
 	socket := os.Getenv("OSQUERY_SOCKET")
 	if socket == "" {
@@ -57,29 +65,29 @@ func (c *OSQueryCollector) CollectProcesses(limit int) ([]map[string]string, err
 
 // CollectOpenPorts returns listening TCP/UDP ports using osquery listening_ports table.
 func (c *OSQueryCollector) CollectOpenPorts() ([]int, error) {
-    rows, err := c.query("SELECT port FROM listening_ports WHERE address != '::' AND port > 0;")
-    if err != nil {
-        return nil, err
-    }
-    ports := make([]int, 0, len(rows))
-    for _, r := range rows {
-        var p int
-        // osquery returns strings; safe parse
-        fmt.Sscanf(r["port"], "%d", &p)
-        if p > 0 {
-            ports = append(ports, p)
-        }
-    }
-    return ports, nil
+	rows, err := c.query("SELECT port FROM listening_ports WHERE address != '::' AND port > 0;")
+	if err != nil {
+		return nil, err
+	}
+	ports := make([]int, 0, len(rows))
+	for _, r := range rows {
+		var p int
+		// osquery returns strings; safe parse
+		fmt.Sscanf(r["port"], "%d", &p)
+		if p > 0 {
+			ports = append(ports, p)
+		}
+	}
+	return ports, nil
 }
 
 // CollectPackages tries osquery packages table.
 func (c *OSQueryCollector) CollectPackages(limit int) ([]map[string]string, error) {
-    if limit <= 0 {
-        limit = 100
-    }
-    q := fmt.Sprintf("SELECT name, version, source, arch FROM packages LIMIT %d;", limit)
-    return c.query(q)
+	if limit <= 0 {
+		limit = 100
+	}
+	q := fmt.Sprintf("SELECT name, version, source, arch FROM packages LIMIT %d;", limit)
+	return c.query(q)
 }
 
 // HealthCheck ensures the socket is reachable by issuing a trivial distributed ping.

@@ -29,15 +29,15 @@ func main() {
 		log.Fatalf("failed to collect processes: %v", err)
 	}
 
-    // Phase 5 additions: open ports and packages
-    openPorts, err := c.CollectOpenPorts()
-    if err != nil {
-        log.Printf("failed to collect open ports: %v", err)
-    }
-    packages, err := c.CollectPackages(200)
-    if err != nil {
-        log.Printf("failed to collect packages: %v", err)
-    }
+	// Phase 5 additions: open ports and packages
+	openPorts, err := c.CollectOpenPorts()
+	if err != nil {
+		log.Printf("failed to collect open ports: %v", err)
+	}
+	packages, err := c.CollectPackages(200)
+	if err != nil {
+		log.Printf("failed to collect packages: %v", err)
+	}
 
 	fmt.Println("Users:")
 	dumpJSON(users)
@@ -71,7 +71,7 @@ func main() {
 		Users:       users,
 		Processes:   procs,
 		OpenPorts:   openPorts,
-        Packages:    packages,
+		Packages:    packages,
 		Violations:  violations,
 	}
 	b, _ := rep.ToJSON()

@@ -25,6 +25,31 @@ go run ./...
 - Additional collectors (open ports, firewall, packages)
 - Cross-platform support
 
+### Folder Structure
+```
+compliance-agent/
+├── main.go
+├── collector/
+│   └── osquery.go
+├── analyzer/
+│   └── compliance.go
+├── report/
+│   └── report.go
+├── Dockerfile (optional)
+├── go.mod
+├── go.sum
+└── README.md
+```
+
+### Suggested Phases and Commit Messages
+- Phase 1: chore: initialize project and main binary skeleton
+- Phase 2: feat: collect users and processes via osquery
+- Phase 3: feat: add compliance rules for users and ports
+- Phase 4: feat: generate JSON compliance report
+- Phase 5: feat: include firewall rules and installed packages
+- Phase 6: refactor: modularize code for extensibility
+- Phase 7: feat: dockerize agent and add periodic execution
+
 ### License
 MIT
 
