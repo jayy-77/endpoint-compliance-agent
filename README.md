@@ -20,14 +20,16 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 - **📊 Comprehensive Data**: Collects users, processes, open ports, and installed packages
 - **⚖️ Policy Evaluation**: Evaluates data against configurable compliance policies
 - **📄 JSON Reports**: Generates structured reports saved to `compliance_report.json`
-- **🔌 Modular Design**: Prepared for extensions (alerting, HTTP shipping, Docker)
+- **🚨 Slack Alerts**: Real-time notifications and compliance reports via Slack
+- **🔌 Modular Design**: Prepared for extensions (HTTP shipping, Docker, more alerting)
 
 ### Architecture
 - `collector/osquery.go`: osquery-based system data collection with auto-setup
 - `collector/fallback.go`: native system command fallback collection
 - `analyzer/compliance.go`: policy definitions and evaluation logic
 - `report/report.go`: JSON report struct, serialization, and file write helper
-- `main.go`: orchestrates collection → analysis → report with smart fallback
+- `alerting/slack.go`: Slack webhook integration for real-time alerts
+- `main.go`: orchestrates collection → analysis → report → alerts with smart fallback
 
 ### Prerequisites
 - **Go 1.22+** (only requirement!)
@@ -57,6 +59,8 @@ go build -o compliance-agent
 
 #### ⚙️ Environment Configuration (Optional)
 - `OSQUERY_SOCKET`: Path to osquery extension socket (default `/var/osquery/osquery.em`)
+- `SLACK_WEBHOOK_URL`: Slack webhook URL for alerts (e.g., `https://hooks.slack.com/services/...`)
+- `SLACK_CHANNEL`: Slack channel for alerts (default `#compliance`)
 
 #### 🔄 What Happens When You Run
 1. **Auto-Detection**: Checks if osquery is available and running
@@ -65,6 +69,25 @@ go build -o compliance-agent
 4. **Data Collection**: Gathers users, processes, ports, and packages
 5. **Compliance Check**: Evaluates against configurable policies
 6. **Report Generation**: Saves JSON report to `compliance_report.json`
+7. **Slack Alerts**: Sends compliance reports and violation alerts to Slack (if configured)
+
+#### 🚨 Slack Integration
+```bash
+# Test Slack connection
+go run . -test-slack
+
+# Run with Slack alerts (set environment variables first)
+export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+export SLACK_CHANNEL="#security"
+go run .
+```
+
+**Slack Features:**
+- 📊 **Compliance Reports**: Rich formatted reports with violation summaries
+- 🚨 **Critical Alerts**: Immediate notifications for violations
+- 🎨 **Color-coded**: Green (clean), Yellow (warnings), Red (critical)
+- 📋 **Detailed Fields**: Hostname, user count, process count, port count, etc.
+- 🔗 **Action Buttons**: Quick access to full reports
 
 ### Output
 The agent prints collected data and violations to stdout and writes a JSON report to `compliance_report.json`, for example:

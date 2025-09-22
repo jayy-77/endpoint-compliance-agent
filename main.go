@@ -2,21 +2,37 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"time"
 
+	"compliance-agent/alerting"
 	"compliance-agent/analyzer"
 	"compliance-agent/collector"
 	"compliance-agent/report"
 )
 
 func main() {
+	// Parse command line flags
+	testSlack := flag.Bool("test-slack", false, "Test Slack connection and send a test message")
+	flag.Parse()
+
+	if *testSlack {
+		fmt.Println("Testing Slack connection...")
+		slackClient := alerting.NewSlackClient()
+		if err := slackClient.TestConnection(); err != nil {
+			log.Fatalf("Slack test failed: %v\nSet SLACK_WEBHOOK_URL environment variable", err)
+		}
+		fmt.Println("✅ Slack connection test successful!")
+		return
+	}
+
 	fmt.Println("Compliance Agent: collecting system data...")
 
 	var c collector.Collector = collector.NewOSQueryCollector()
-	
+
 	// Try to ensure osquery is running, fallback to basic collection if not
 	if osqCollector, ok := c.(*collector.OSQueryCollector); ok {
 		if err := osqCollector.EnsureOSQueryRunning(); err != nil {
@@ -86,6 +102,45 @@ func main() {
 		log.Printf("failed to save report: %v", err)
 	} else {
 		fmt.Println("Saved report to compliance_report.json")
+	}
+
+	// Phase 5: Send alerts to Slack (if configured)
+	slackClient := alerting.NewSlackClient()
+	
+	// Test Slack connection first
+	if err := slackClient.TestConnection(); err != nil {
+		fmt.Printf("Slack not configured or connection failed: %v\n", err)
+		fmt.Println("To enable Slack alerts, set SLACK_WEBHOOK_URL environment variable")
+	} else {
+		fmt.Println("Slack connection successful! Sending compliance report...")
+		
+		// Convert report to Slack format
+		slackReport := alerting.ComplianceReport{
+			GeneratedAt:   rep.GeneratedAt,
+			Hostname:      rep.Hostname,
+			Users:         rep.Users,
+			Processes:     rep.Processes,
+			OpenPorts:     rep.OpenPorts,
+			Packages:      rep.Packages,
+			Violations:    rep.Violations,
+			ExtraMetadata: rep.ExtraMetadata,
+		}
+		
+		// Send compliance report
+		if err := slackClient.SendComplianceReport(slackReport); err != nil {
+			log.Printf("Failed to send compliance report to Slack: %v", err)
+		} else {
+			fmt.Println("✅ Compliance report sent to Slack successfully!")
+		}
+		
+		// Send critical violation alerts if any
+		if len(violations) > 0 {
+			if err := slackClient.SendViolationAlert(hostname, violations); err != nil {
+				log.Printf("Failed to send violation alert to Slack: %v", err)
+			} else {
+				fmt.Println("🚨 Violation alerts sent to Slack!")
+			}
+		}
 	}
 }
 

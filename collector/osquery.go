@@ -76,7 +76,7 @@ func (c *OSQueryCollector) startOSQueryDaemon() error {
 	}
 
 	// Start osquery daemon
-	cmd := exec.Command(osqueryPath, 
+	cmd := exec.Command(osqueryPath,
 		"--ephemeral",
 		"--disable_database",
 		"--tls_disable=true",
@@ -156,7 +156,7 @@ func (c *OSQueryCollector) installOSQueryLinux() (string, error) {
 		if err := cmd.Run(); err != nil {
 			return "", fmt.Errorf("apt update failed: %w", err)
 		}
-		
+
 		cmd = exec.Command("sudo", "apt", "install", "-y", "osquery")
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
