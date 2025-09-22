@@ -13,11 +13,16 @@ import (
 )
 
 func main() {
-	fmt.Println("Compliance Agent: collecting users and processes via osquery...")
+	fmt.Println("Compliance Agent: collecting system data...")
 
-	c := collector.NewOSQueryCollector()
-	if err := c.HealthCheck(); err != nil {
-		log.Fatalf("osquery not available: %v\nSet OSQUERY_SOCKET if needed, e.g. /var/osquery/osquery.em", err)
+	var c collector.Collector = collector.NewOSQueryCollector()
+	
+	// Try to ensure osquery is running, fallback to basic collection if not
+	if osqCollector, ok := c.(*collector.OSQueryCollector); ok {
+		if err := osqCollector.EnsureOSQueryRunning(); err != nil {
+			fmt.Printf("Using fallback data collection: %v\n", err)
+			c = collector.NewFallbackCollector()
+		}
 	}
 
 	users, err := c.CollectUsers()
