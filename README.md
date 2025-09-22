@@ -6,6 +6,13 @@
 
 Compliance Agent is an open-source DevSecOps endpoint compliance tool written in Go. It collects system and security telemetry via osquery, evaluates simple compliance policies (e.g., allowed users and ports), and generates structured JSON reports that can be saved to disk or shipped elsewhere in future extensions.
 
+<p align="center">
+  <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white" alt="Go Version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
+  <a href="Dockerfile"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
+  <a href="https://github.com/jaykumar/endpoint-compliance-agent/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+</p>
+
 ### Features
 - Collects users, processes, open ports, and installed packages using osquery
 - Evaluates collected data against simple compliance policies
@@ -60,6 +67,11 @@ docker build -t compliance-agent .
 ```
 
 Note: To use osquery inside containers, you typically need to run osquery on the host and provide access to its socket. Containerized usage may require additional configuration depending on your environment.
+
+### Why Compliance Agent?
+- Minimal runtime dependencies using osquery for rich, cross-platform system data
+- Clear, structured JSON outputs that are easy to integrate with SIEM/ELK
+- Simple policy model to start, designed for incremental hardening and features
 
 ### Roadmap
 - HTTP exporter for sending reports to a central service
