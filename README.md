@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.svg" alt="Compliance Agent" width="520" />
+</p>
+
 ## Compliance Agent
 
 Compliance Agent is an open-source DevSecOps endpoint compliance tool written in Go. It collects system and security telemetry via osquery, evaluates simple compliance policies (e.g., allowed users and ports), and generates structured JSON reports that can be saved to disk or shipped elsewhere in future extensions.
