@@ -12,6 +12,8 @@ type ComplianceReport struct {
     Users         []map[string]string    `json:"users"`
     Processes     []map[string]string    `json:"processes"`
     OpenPorts     []int                  `json:"open_ports"`
+    FirewallRules []string               `json:"firewall_rules,omitempty"`
+    Packages      []map[string]string    `json:"packages,omitempty"`
     Violations    []map[string]string    `json:"violations"`
     ExtraMetadata map[string]interface{} `json:"meta,omitempty"`
 }
