@@ -1,0 +1,37 @@
+# Personal data and sensitive files
+compliance_report.json
+*.log
+.env
+.env.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Go build artifacts
+compliance-agent
+compliance-agent.exe
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test files
+test_output.json
+temp_*
+
+# LinkedIn posts and personal content
+linkedin-post.md
+personal-notes.md

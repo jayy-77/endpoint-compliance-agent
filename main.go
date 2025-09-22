@@ -67,7 +67,7 @@ func main() {
 
 	// Phase 3: simple compliance policies
 	policies := analyzer.Policies{
-		AllowedUsers: []string{"root", "jaykumar"},
+		AllowedUsers: []string{"root", "admin"},
 		AllowedPorts: []int{22, 80, 443},
 	}
 	userViolations := analyzer.AnalyzeUsers(users, policies)
@@ -106,14 +106,14 @@ func main() {
 
 	// Phase 5: Send alerts to Slack (if configured)
 	slackClient := alerting.NewSlackClient()
-	
+
 	// Test Slack connection first
 	if err := slackClient.TestConnection(); err != nil {
 		fmt.Printf("Slack not configured or connection failed: %v\n", err)
 		fmt.Println("To enable Slack alerts, set SLACK_WEBHOOK_URL environment variable")
 	} else {
 		fmt.Println("Slack connection successful! Sending compliance report...")
-		
+
 		// Convert report to Slack format
 		slackReport := alerting.ComplianceReport{
 			GeneratedAt:   rep.GeneratedAt,
@@ -125,14 +125,14 @@ func main() {
 			Violations:    rep.Violations,
 			ExtraMetadata: rep.ExtraMetadata,
 		}
-		
+
 		// Send compliance report
 		if err := slackClient.SendComplianceReport(slackReport); err != nil {
 			log.Printf("Failed to send compliance report to Slack: %v", err)
 		} else {
 			fmt.Println("✅ Compliance report sent to Slack successfully!")
 		}
-		
+
 		// Send critical violation alerts if any
 		if len(violations) > 0 {
 			if err := slackClient.SendViolationAlert(hostname, violations); err != nil {

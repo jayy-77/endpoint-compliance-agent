@@ -10,7 +10,7 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
   <a href="https://go.dev/"><img src="https://img.shields.io/badge/Go-1.22%2B-00ADD8?logo=go&logoColor=white" alt="Go Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License"></a>
   <a href="Dockerfile"><img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker"></a>
-  <a href="https://github.com/jaykumar/endpoint-compliance-agent/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+  <a href="https://github.com/yourusername/endpoint-compliance-agent/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
 </p>
 
 ### Features
@@ -43,7 +43,7 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 #### 🚀 Single-Click Execution (Recommended)
 ```bash
 # Clone and run immediately - no setup required!
-git clone https://github.com/jaykumar/endpoint-compliance-agent.git
+git clone https://github.com/yourusername/endpoint-compliance-agent.git
 cd endpoint-compliance-agent
 go run ./...
 ```
