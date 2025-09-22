@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-    fmt.Println("Compliance Agent: collecting users and processes via osquery...")
+	fmt.Println("Compliance Agent: collecting users and processes via osquery...")
 
 	c := collector.NewOSQueryCollector()
 	if err := c.HealthCheck(); err != nil {
@@ -74,10 +74,10 @@ func main() {
 		Packages:    packages,
 		Violations:  violations,
 	}
-    b, _ := rep.ToJSON()
-    fmt.Println("Compliance Report JSON:")
-    fmt.Println(string(b))
-    if err := rep.SaveToFile("compliance_report.json"); err != nil {
+	b, _ := rep.ToJSON()
+	fmt.Println("Compliance Report JSON:")
+	fmt.Println(string(b))
+	if err := rep.SaveToFile("compliance_report.json"); err != nil {
 		log.Printf("failed to save report: %v", err)
 	} else {
 		fmt.Println("Saved report to compliance_report.json")

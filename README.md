@@ -1,54 +1,74 @@
-## Compliance Agent (DevSecOps)
+## Compliance Agent
 
-Go-based endpoint compliance agent that collects system/security data using osquery, evaluates simple policies, and generates JSON reports.
+Compliance Agent is an open-source DevSecOps endpoint compliance tool written in Go. It collects system and security telemetry via osquery, evaluates simple compliance policies (e.g., allowed users and ports), and generates structured JSON reports that can be saved to disk or shipped elsewhere in future extensions.
 
-### Phases
-- Phase 1: Project Skeleton & Basic Binary
-- Phase 2: Collect System Data via osquery (users, processes)
-- Phase 3: Check Compliance Rules (allowed users, allowed ports)
-- Phase 4: Generate JSON Reports
-- Phase 5: Add Firewall & Package Checks
-- Phase 6: Modularize for Extensions (collector/analyzer/report)
-- Phase 7 (Optional): Dockerize & Periodic Execution
+### Features
+- Collects users, processes, open ports, and installed packages using osquery
+- Evaluates collected data against simple compliance policies
+- Produces a structured JSON compliance report (writes to `compliance_report.json`)
+- Modular design prepared for extensions (alerting, HTTP shipping, Docker)
 
-### Quick Start
+### Architecture
+- `collector`: osquery-based system data collection
+- `analyzer`: policy definitions and evaluation logic
+- `report`: JSON report struct, serialization, and file write helper
+- `main.go`: orchestrates collection → analysis → report
+
+### Prerequisites
+- Go 1.22+
+- osquery installed and running
+  - Default socket path is `/var/osquery/osquery.em`
+  - Override with env var `OSQUERY_SOCKET`
+
+### Usage
+Run directly from source:
 ```bash
 go run ./...
 ```
 
-### Requirements
-- Go 1.22+
-- osquery daemon running (e.g., socket at /var/osquery/osquery.em)
+Build and run the binary:
+```bash
+go build -o compliance-agent
+./compliance-agent
+```
+
+Environment configuration:
+- `OSQUERY_SOCKET`: Path to osquery extension socket (default `/var/osquery/osquery.em`)
+
+### Output
+The agent prints collected data and violations to stdout and writes a JSON report to `compliance_report.json`, for example:
+```json
+{
+  "generated_at": "2025-09-22T10:00:00Z",
+  "hostname": "host.example",
+  "users": [ {"username": "root", "uid": "0" } ],
+  "processes": [ ... ],
+  "open_ports": [22, 80],
+  "packages": [ {"name": "bash", "version": "5.2" } ],
+  "violations": [ {"category": "user", "message": "unexpected user present: test"} ]
+}
+```
+
+### Docker
+Build the container image:
+```bash
+docker build -t compliance-agent .
+```
+
+Note: To use osquery inside containers, you typically need to run osquery on the host and provide access to its socket. Containerized usage may require additional configuration depending on your environment.
 
 ### Roadmap
-- HTTP shipping, alerting, Docker support
-- Additional collectors (open ports, firewall, packages)
-- Cross-platform support
+- HTTP exporter for sending reports to a central service
+- Alerting integrations (Slack, email, SIEM)
+- Additional collectors (firewall rules, deeper package metadata, OS hardening)
+- Cross-platform support (macOS, Linux variants)
 
-### Folder Structure
-```
-compliance-agent/
-├── main.go
-├── collector/
-│   └── osquery.go
-├── analyzer/
-│   └── compliance.go
-├── report/
-│   └── report.go
-├── Dockerfile (optional)
-├── go.mod
-├── go.sum
-└── README.md
-```
-
-### Suggested Phases and Commit Messages
-- Phase 1: chore: initialize project and main binary skeleton
-- Phase 2: feat: collect users and processes via osquery
-- Phase 3: feat: add compliance rules for users and ports
-- Phase 4: feat: generate JSON compliance report
-- Phase 5: feat: include firewall rules and installed packages
-- Phase 6: refactor: modularize code for extensibility
-- Phase 7: feat: dockerize agent and add periodic execution
+### Contributing
+Contributions are welcome! Please open an issue to discuss significant changes. For small fixes and improvements:
+1. Fork the repo
+2. Create a feature branch
+3. Commit with clear messages
+4. Open a PR against `main`
 
 ### License
 MIT
