@@ -14,6 +14,7 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 </p>
 
 ### Features
+
 - **🚀 Single-Click Execution**: No manual setup required - just run and go!
 - **🔧 Auto-Setup**: Automatically installs and configures osquery if available
 - **🛡️ Fallback Collection**: Works without osquery using native system commands
@@ -24,14 +25,17 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 - **🔌 Modular Design**: Prepared for extensions (HTTP shipping, Docker, more alerting)
 
 ### Architecture
+
 - `collector/osquery.go`: osquery-based system data collection with auto-setup
 - `collector/fallback.go`: native system command fallback collection
 - `analyzer/compliance.go`: policy definitions and evaluation logic
 - `report/report.go`: JSON report struct, serialization, and file write helper
 - `alerting/slack.go`: Slack webhook integration for real-time alerts
+- `alerting/teams.go`: Teams webhook integration for real-time alerts
 - `main.go`: orchestrates collection → analysis → report → alerts with smart fallback
 
 ### Prerequisites
+
 - **Go 1.22+** (only requirement!)
 - **Optional**: osquery for enhanced data collection
   - Agent will auto-install osquery if available
@@ -41,6 +45,7 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 ### Usage
 
 #### 🚀 Single-Click Execution (Recommended)
+
 ```bash
 # Clone and run immediately - no setup required!
 git clone https://github.com/yourusername/endpoint-compliance-agent.git
@@ -49,6 +54,7 @@ go run ./...
 ```
 
 #### 📦 Build and Run
+
 ```bash
 # Build the binary
 go build -o compliance-agent
@@ -58,11 +64,14 @@ go build -o compliance-agent
 ```
 
 #### ⚙️ Environment Configuration (Optional)
+
 - `OSQUERY_SOCKET`: Path to osquery extension socket (default `/var/osquery/osquery.em`)
 - `SLACK_WEBHOOK_URL`: Slack webhook URL for alerts (e.g., `https://hooks.slack.com/services/...`)
+- `TEAMS_WEBHOOOK_URL`: Teams webhook URL for alerts (e.g., `https://outlook.office.com/webhook/YOUR_WEBHOOK_URL`)
 - `SLACK_CHANNEL`: Slack channel for alerts (default `#compliance`)
 
 #### 🔄 What Happens When You Run
+
 1. **Auto-Detection**: Checks if osquery is available and running
 2. **Auto-Setup**: Attempts to install osquery via package manager (Homebrew/apt/yum)
 3. **Smart Fallback**: Uses native system commands if osquery unavailable
@@ -70,8 +79,10 @@ go build -o compliance-agent
 5. **Compliance Check**: Evaluates against configurable policies
 6. **Report Generation**: Saves JSON report to `compliance_report.json`
 7. **Slack Alerts**: Sends compliance reports and violation alerts to Slack (if configured)
+8. **Teams Alerts**: Sends compliance reports and violation alerts to Teams (if configured)
 
 #### 🚨 Slack Integration
+
 ```bash
 # Test Slack connection
 go run . -test-slack
@@ -83,14 +94,42 @@ go run .
 ```
 
 **Slack Features:**
+
 - 📊 **Compliance Reports**: Rich formatted reports with violation summaries
 - 🚨 **Critical Alerts**: Immediate notifications for violations
 - 🎨 **Color-coded**: Green (clean), Yellow (warnings), Red (critical)
 - 📋 **Detailed Fields**: Hostname, user count, process count, port count, etc.
 - 🔗 **Action Buttons**: Quick access to full reports
 
+### 🚨 Microsoft Teams Integration
+
+```bash
+# Test Teams connection
+go run . -test-teams
+
+# Run with Teams alerts (set environment variable first)
+export TEAMS_WEBHOOK_URL="https://outlook.office.com/webhook/YOUR/WEBHOOK/URL"
+go run .
+```
+
+**Teams Features:**
+
+- 📊 **Compliance Reports** – Sends structured adaptive card messages with violation summaries
+- 🚨 **Critical Alerts** – Immediate notifications for high-severity issues
+- 🎨 **Severity Indicators** –
+
+  - 🟢 _Green_: Clean
+  - 🟡 _Warning_: Medium risk
+  - 🔴 _Critical_: High risk, needs immediate attention
+
+- 📋 **Detailed Fields** – Hostname, user count, process count, open ports, and other relevant system info
+- 🔗 **Actionable Links** – Direct access to full reports or dashboards
+- 🕒 **Timestamped Messages** – Each alert includes timestamp and metadata
+
 ### Output
+
 The agent prints collected data and violations to stdout and writes a JSON report to `compliance_report.json`, for example:
+
 ```json
 {
   "generated_at": "2025-09-22T10:00:00Z",
@@ -104,7 +143,9 @@ The agent prints collected data and violations to stdout and writes a JSON repor
 ```
 
 ### Docker
+
 Build the container image:
+
 ```bash
 docker build -t compliance-agent .
 ```
@@ -112,6 +153,7 @@ docker build -t compliance-agent .
 Note: To use osquery inside containers, you typically need to run osquery on the host and provide access to its socket. Containerized usage may require additional configuration depending on your environment.
 
 ### Why Compliance Agent?
+
 - **🎯 Zero-Config**: Works out of the box with no manual setup
 - **🔄 Smart Fallback**: Gracefully handles missing dependencies
 - **📊 Rich Data**: Comprehensive system telemetry via osquery or native commands
@@ -120,6 +162,7 @@ Note: To use osquery inside containers, you typically need to run osquery on the
 - **🛠️ Extensible**: Modular design for easy feature additions
 
 ### Roadmap
+
 - **🌐 HTTP Exporter**: Send reports to central services
 - **🚨 Alerting**: Slack, email, SIEM integrations
 - **🔍 Enhanced Collectors**: Firewall rules, deeper package metadata, OS hardening
@@ -128,13 +171,14 @@ Note: To use osquery inside containers, you typically need to run osquery on the
 - **📈 Dashboard**: Web UI for compliance monitoring
 
 ### Contributing
+
 Contributions are welcome! Please open an issue to discuss significant changes. For small fixes and improvements:
+
 1. Fork the repo
 2. Create a feature branch
 3. Commit with clear messages
 4. Open a PR against `main`
 
 ### License
+
 MIT
-
-
