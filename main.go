@@ -18,6 +18,18 @@ func main() {
 	// Parse command line flags
 	testSlack := flag.Bool("test-slack", false, "Test Slack connection and send a test message")
 	flag.Parse()
+	testTeams := flag.Bool("test-teams", false, "Test Teams Webhook connection and send a test message")
+	flag.Parse()
+
+	if *testTeams {
+		fmt.Println("Testing Teams Webhook connection...")
+		teamsClient := alerting.NewTeamsClient()
+		if err := teamsClient.TestConnection(); err != nil {
+			log.Fatalf("Teams test failed: %v\nSet TEAMS_WEBHOOK_URL environment variable", err)
+		}
+		fmt.Println("✅ TEAMS connection test successful!")
+		return
+	}
 
 	if *testSlack {
 		fmt.Println("Testing Slack connection...")
@@ -142,6 +154,44 @@ func main() {
 			}
 		}
 	}
+	teamsClient := alerting.NewTeamsClient()
+
+	// Test Teams connection first
+	if err := teamsClient.TestConnection(); err != nil {
+		fmt.Printf("Teams not configured or connection failed: %v\n", err)
+		fmt.Println("To enable Teams alerts, set TEAMS_WEBHOOK_URL environment variable")
+	} else {
+		fmt.Println("Teams connection successful! Sending compliance report...")
+
+		// Convert report to Teams format (uses same ComplianceReport struct)
+		teamsReport := alerting.ComplianceReport{
+			GeneratedAt:   rep.GeneratedAt,
+			Hostname:      rep.Hostname,
+			Users:         rep.Users,
+			Processes:     rep.Processes,
+			OpenPorts:     rep.OpenPorts,
+			Packages:      rep.Packages,
+			Violations:    rep.Violations,
+			ExtraMetadata: rep.ExtraMetadata,
+		}
+
+		// Send compliance report
+		if err := teamsClient.SendComplianceReport(teamsReport); err != nil {
+			log.Printf("Failed to send compliance report to Teams: %v", err)
+		} else {
+			fmt.Println("✅ Compliance report sent to Teams successfully!")
+		}
+
+		// Send critical violation alerts if any
+		if len(violations) > 0 {
+			if err := teamsClient.SendViolationAlert(hostname, violations); err != nil {
+				log.Printf("Failed to send violation alert to Teams: %v", err)
+			} else {
+				fmt.Println("🚨 Violation alerts sent to Teams!")
+			}
+		}
+	}
+
 }
 
 func dumpJSON(v any) {
