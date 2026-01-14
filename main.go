@@ -1,22 +1,32 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"compliance-agent/alerting"
 	"compliance-agent/analyzer"
+	"compliance-agent/baseline"
 	"compliance-agent/collector"
+	"compliance-agent/config"
+	"compliance-agent/exporter"
+	"compliance-agent/ml"
+	"compliance-agent/mode"
 	"compliance-agent/report"
 )
 
 func main() {
 	// Parse command line flags
 	testSlack := flag.Bool("test-slack", false, "Test Slack connection and send a test message")
+	configPath := flag.String("config", "", "Path to YAML config (optional)")
+	streaming := flag.Bool("streaming", false, "Run in streaming mode (loop forever)")
 	flag.Parse()
 
 	if *testSlack {
@@ -26,6 +36,20 @@ func main() {
 			log.Fatalf("Slack test failed: %v\nSet SLACK_WEBHOOK_URL environment variable", err)
 		}
 		fmt.Println("✅ Slack connection test successful!")
+		return
+	}
+
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Fatalf("config load: %v", err)
+	}
+	if *streaming {
+		cfg.Mode = "streaming"
+	}
+
+	// Streaming mode short-circuits the one-shot flow.
+	if cfg.Mode == "streaming" {
+		runStreaming(cfg)
 		return
 	}
 
@@ -86,14 +110,41 @@ func main() {
 	for _, v := range portViolations {
 		violations = append(violations, map[string]string{"category": v.Category, "message": v.Message})
 	}
+	// Behavioral / UEBA layer: build the baseline-aware feature vector,
+	// score it, and attach the score to the report metadata so downstream
+	// SIEM rules can branch on it.
+	bstore := baseline.NewStore(cfg.Baseline.Path)
+	if err := bstore.Load(); err != nil {
+		log.Printf("baseline load: %v", err)
+	}
+	snap := baseline.SnapshotFromCollected(hostname, procs, openPorts, users, packages)
+	bstore.Update(snap)
+	feats := ml.BuildFeatures(snap, bstore.Data())
+	scorer := ml.NewScorer(cfg.ML.URL, cfg.ML.Timeout)
+	score, model, scoreErr := scorer.Score(context.Background(), feats)
+	if scoreErr != nil {
+		log.Printf("ml score failed: %v (model=%s)", scoreErr, model)
+	}
+	if err := bstore.Save(); err != nil {
+		log.Printf("baseline save: %v", err)
+	}
+	mlMeta := map[string]interface{}{
+		"score":     score,
+		"model":     model,
+		"threshold": cfg.ML.Threshold,
+		"anomaly":   score >= cfg.ML.Threshold,
+		"features":  feats,
+	}
+
 	rep := report.ComplianceReport{
-		GeneratedAt: time.Now().UTC(),
-		Hostname:    hostname,
-		Users:       users,
-		Processes:   procs,
-		OpenPorts:   openPorts,
-		Packages:    packages,
-		Violations:  violations,
+		GeneratedAt:   time.Now().UTC(),
+		Hostname:      hostname,
+		Users:         users,
+		Processes:     procs,
+		OpenPorts:     openPorts,
+		Packages:      packages,
+		Violations:    violations,
+		ExtraMetadata: map[string]interface{}{"ml": mlMeta},
 	}
 	b, _ := rep.ToJSON()
 	fmt.Println("Compliance Report JSON:")
@@ -151,4 +202,47 @@ func dumpJSON(v any) {
 		return
 	}
 	fmt.Println(string(b))
+}
+
+// runStreaming wires up the agent dependencies and runs the streaming mode
+// loop. It uses the same collector/baseline/ML stack as the one-shot path
+// so we don't have two code paths drifting apart.
+func runStreaming(cfg config.Config) {
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	var c collector.Collector = collector.NewOSQueryCollector()
+	if osqC, ok := c.(*collector.OSQueryCollector); ok {
+		if err := osqC.EnsureOSQueryRunning(); err != nil {
+			log.Printf("osquery unavailable, using fallback: %v", err)
+			c = collector.NewFallbackCollector()
+		}
+	}
+
+	bstore := baseline.NewStore(cfg.Baseline.Path)
+	if err := bstore.Load(); err != nil {
+		log.Printf("baseline load: %v", err)
+	}
+
+	var exp *exporter.Server
+	if cfg.Exporter.Enabled {
+		exp = exporter.New(cfg.Exporter.Addr)
+		go func() {
+			log.Printf("exporter listening on %s", cfg.Exporter.Addr)
+			if err := exp.ListenAndServe(); err != nil {
+				log.Printf("exporter shutdown: %v", err)
+			}
+		}()
+	}
+
+	runner := mode.Runner{
+		Cfg:       cfg,
+		Collector: c,
+		Baseline:  bstore,
+		Scorer:    ml.NewScorer(cfg.ML.URL, cfg.ML.Timeout),
+		Exporter:  exp,
+	}
+	if err := mode.RunStreaming(ctx, runner); err != nil && err != context.Canceled {
+		log.Printf("streaming exited: %v", err)
+	}
 }
