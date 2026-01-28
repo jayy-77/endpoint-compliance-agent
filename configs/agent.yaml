@@ -1,0 +1,17 @@
+mode: streaming
+interval: 60s
+
+baseline:
+  path: /var/lib/compliance-agent/baseline.json
+
+ml:
+  url: http://ml-service:8000/score
+  timeout: 2s
+  threshold: 0.7
+
+alerting:
+  on_anomaly: true
+
+exporter:
+  enabled: true
+  addr: ":9100"
