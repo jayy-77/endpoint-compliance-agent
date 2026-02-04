@@ -7,5 +7,7 @@ FROM gcr.io/distroless/base-debian12:nonroot
 WORKDIR /
 COPY --from=build /out/compliance-agent /compliance-agent
 USER nonroot:nonroot
+EXPOSE 9100
 ENTRYPOINT ["/compliance-agent"]
+CMD ["-streaming"]
 
