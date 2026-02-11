@@ -1,0 +1,29 @@
+version: "3.9"
+
+services:
+  ml-service:
+    build:
+      context: .
+      dockerfile: ml_service/Dockerfile
+    container_name: ueba-ml
+    ports:
+      - "8000:8000"
+    environment:
+      MODEL_PATH: /models/ueba.joblib
+    volumes:
+      - ./models:/models:ro
+    restart: unless-stopped
+
+  agent:
+    build:
+      context: .
+    container_name: compliance-agent
+    depends_on:
+      - ml-service
+    environment:
+      ML_SERVICE_URL: http://ml-service:8000/score
+      EXPORTER_ENABLED: "true"
+      EXPORTER_ADDR: ":9100"
+    ports:
+      - "9100:9100"
+    restart: unless-stopped
