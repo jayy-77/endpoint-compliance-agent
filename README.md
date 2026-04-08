@@ -17,8 +17,10 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 - **🚀 Single-Click Execution**: No manual setup required - just run and go!
 - **🔧 Auto-Setup**: Automatically installs and configures osquery if available
 - **🛡️ Fallback Collection**: Works without osquery using native system commands
-- **📊 Comprehensive Data**: Collects users, processes, open ports, and installed packages
+- **📊 Comprehensive Data**: Collects users, processes, open ports, packages, network & system metrics
 - **⚖️ Policy Evaluation**: Evaluates data against configurable compliance policies
+- **🧠 UEBA Scoring** (new): per-host baseline + ML anomaly scorer (Python sidecar)
+- **♻️ Streaming Mode** (new): continuous snapshot loop with HTTP `/report` exporter
 - **📄 JSON Reports**: Generates structured reports saved to `compliance_report.json`
 - **🚨 Slack Alerts**: Real-time notifications and compliance reports via Slack
 - **🔌 Modular Design**: Prepared for extensions (HTTP shipping, Docker, more alerting)
@@ -26,6 +28,13 @@ Compliance Agent is an open-source DevSecOps endpoint compliance tool written in
 ### Architecture
 - `collector/osquery.go`: osquery-based system data collection with auto-setup
 - `collector/fallback.go`: native system command fallback collection
+- `collector/network.go`, `collector/sysmetrics.go`: extra telemetry for ML features
+- `baseline/`: rolling baseline of process / port / user / package frequencies
+- `ml/`: feature builder and HTTP scorer (heuristic fallback when no model)
+- `ml_service/`: Python FastAPI scorer (IsolationForest)
+- `mode/streaming.go`: continuous snapshot loop
+- `exporter/http.go`: `/report` + `/healthz` HTTP surface
+- `config/`: YAML configuration loader
 - `analyzer/compliance.go`: policy definitions and evaluation logic
 - `report/report.go`: JSON report struct, serialization, and file write helper
 - `alerting/slack.go`: Slack webhook integration for real-time alerts
